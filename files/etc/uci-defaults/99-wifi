@@ -1,0 +1,14 @@
+#!/bin/sh
+# 无线: 禁用 2.4G; 5G -> AA_5G / asd12345
+[ -s /etc/config/wireless ] || wifi config 2>/dev/null
+for r in $(uci -q show wireless 2>/dev/null | grep "\.band='2g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
+	uci set "$r.disabled='1'"
+done
+for r in $(uci -q show wireless 2>/dev/null | grep "\.band='5g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
+	uci set "$r.disabled='0'"
+	uci set "$r.ssid='AA_5G'"
+	uci set "$r.encryption='psk2'"
+	uci set "$r.key='asd12345'"
+done
+uci -q commit wireless 2>/dev/null || true
+exit 0

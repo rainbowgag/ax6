@@ -1,0 +1,13 @@
+#!/bin/sh
+# 关闭 IPv6
+for s in $(uci -q show network 2>/dev/null | grep "\.ipv6='1'" | sed "s/\(network\.[a-z0-9_]*\)\..*/\1/"); do
+	uci set "$s.ipv6='0'"
+done
+uci -q delete network.globals.ula_prefix 2>/dev/null || true
+uci -q commit network 2>/dev/null || true
+/etc/init.d/odhcpd disable 2>/dev/null || true
+cat >> /etc/sysctl.conf <<'SYS'
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+SYS
+exit 0
