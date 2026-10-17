@@ -1,0 +1,7 @@
+#!/bin/sh
+# 设置默认后台地址 192.168.100.1（dhcp start/limit 为相对偏移，随网段自动匹配）
+uci -q set network.lan.ipaddr='192.168.100.1'
+uci -q set network.lan.netmask='255.255.255.0'
+uci -q commit network
+/etc/init.d/network reload 2>/dev/null || true
+exit 0

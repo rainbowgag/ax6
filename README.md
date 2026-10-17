@@ -8,6 +8,8 @@
 |---|---|
 | 源码 | kiddin9/Kwrt 分支 25.12，内核 6.12，squashfs |
 | 目标 | Redmi AX6（qualcommax/ipq807x，aarch64_cortex-a53），仅此一个设备 |
+| 后台地址 | **192.168.100.1**（首启脚本 00-lan-ip 设置，默认网段 192.168.100.0/24） |
+| 登录账号 | **root / root**（首启脚本 00-root-passwd 设置，与 Kwrt 默认一致） |
 | PassWall 设备口令 | luci-app-passwall-device **0.8.5**（内置，服务→PassWall 设备口令；支持自更新，更新源指向 rainbowgag/passwall-editor 官方清单） |
 | 在线升级 | luci-app-gpsysupgrade，更新源指向自有服务器 `http://m.yaml.uk:25532/firmware` |
 | 主题 | **Argon**（luci-theme-argon + luci-app-argon-config，默认主题） |
@@ -24,11 +26,12 @@
 ├── files/                     # OpenWrt files/ 覆盖目录（编译时自动并入 rootfs）
 │   ├── etc/config/            #   luci（argon 默认主题）、passwall_device 默认配置
 │   ├── etc/init.d/passwall-device
-│   ├── etc/uci-defaults/      #   98-ipv6-off、99-wifi（首启自动配置）
+│   ├── etc/uci-defaults/      #   00-lan-ip、00-root-passwd、98-ipv6-off、99-wifi（首启自动配置）
 │   └── usr/                   #   插件 Lua/页面/脚本
 └── scripts/
     ├── build_step2.sh         # 配置装配：feeds 安装 + 组装 .config + 补丁 + 插件覆盖 + 升级源替换 + defconfig
     ├── build_step3.sh         # 第二轮定制：插件更新 + argon + 关 IPv6 + 无线 + 版本号
+    ├── build_v3.sh            # 第三轮定制：后台地址 192.168.100.1 + root/root 密码
     ├── fix_diy.sh             # 修复 diy.sh 依赖（openssl/ppp/hack-6.12 补丁）
     ├── fresh_defconfig.sh     # 全新元数据 + 组装配置 + defconfig
     ├── run_build.sh           # 编译入口（-j4，失败回退 -j1 V=s）
@@ -73,6 +76,8 @@ make -j4 2>&1 | tee /root/build.log
 bash /root/deploy_firmware.sh
 ```
 
+> 说明：后台地址 192.168.100.1 与 root/root 密码由 files/etc/uci-defaults/ 下 00-lan-ip、00-root-passwd 在首次开机时自动设置；后续如需微调无线/版本号，参考 build_step3.sh、build_v3.sh 修改对应 heredoc 后重跑。
+
 ## 版本号说明
 
 - 版本号取编译日期：`include/version.mk` 里 `REVISION:=<日.月.年>`（如 10.18.2026）。
@@ -90,5 +95,5 @@ bash /root/deploy_firmware.sh
 
 ## 变更记录
 
-- 2026-10-18 v10.18.2026：passwall-device 0.8.5 内置；argon 主题；关闭 IPv6；2.4G 禁用；5G = AA_5G/asd12345。
+- 2026-10-17 v10.18.2026（修订）：后台地址 192.168.100.1，root/root；passwall-device 0.8.5；argon 主题；关 IPv6；2.4G 禁用；5G = AA_5G/asd12345。
 - 2026-10-17 v10.17.2026：首版编译（passwall-device 0.8.1 内置 + 在线升级 m.yaml.uk:25532）。

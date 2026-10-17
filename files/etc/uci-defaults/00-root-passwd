@@ -1,0 +1,4 @@
+#!/bin/sh
+# 设置 root 默认密码为 root（首次开机生效）
+echo -e 'root\nroot' | passwd root 2>/dev/null || true
+exit 0
