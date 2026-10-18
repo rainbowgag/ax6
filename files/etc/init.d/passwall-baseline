@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+# 固件基线: 固件版本变化时自动应用以下配置(无线/密码/主题/IPv6)
+# 这样保留配置在线升级后, 新固件的基线也能生效; 之后用户可自由修改
+START=98
+STOP=10
+
+apply_baseline() {
+	# 1) 无线: 禁用 2.4G; 5G -> AA_5G / asd12345 (按 band 识别, 不依赖 radio 索引)
+	[ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
+	for r in $(uci -q show wireless 2>/dev/null | grep "\.band='2g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
+		uci -q set "$r.disabled='1'"
+	done
+	for r in $(uci -q show wireless 2>/dev/null | grep "\.band='5g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
+		uci -q set "$r.disabled='0'"
+		uci -q set "$r.ssid='AA_5G'"
+		uci -q set "$r.encryption='psk2'"
+		uci -q set "$r.key='asd12345'"
+	done
+	uci -q commit wireless 2>/dev/null || true
+	# 2) root 密码 -> root
+	(echo 'root'; echo 'root') | passwd root >/dev/null 2>&1 || true
+	# 3) 主题 -> argon (若已安装)
+	if [ -d /www/luci-static/argon ]; then
+		uci -q set luci.main.mediaurlbase='/luci-static/argon'
+		uci -q commit luci
+	fi
+	# 4) 关闭 IPv6
+	for i in $(uci -q show network | grep "\.ipv6='auto'" | sed "s/\(network\.[a-z0-9_]*\)\..*/\1/"); do
+		uci -q set "$i.ipv6='0'"
+	done
+	uci -q delete network.globals.ula_prefix 2>/dev/null || true
+	uci -q set dhcp.lan.dhcpv6='disabled' 2>/dev/null || true
+	uci -q commit network 2>/dev/null || true
+	uci -q commit dhcp 2>/dev/null || true
+	cat > /etc/sysctl.d/99-ipv6-off.conf <<'CONF'
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+CONF
+	# 5) 记录已应用版本
+	echo "$(cat /etc/openwrt_version)" > /etc/config/.baseline-applied
+}
+
+start() {
+	[ -f /etc/config/.baseline-applied ] || { apply_baseline; exit 0; }
+	cur=$(cat /etc/openwrt_version 2>/dev/null)
+	old=$(cat /etc/config/.baseline-applied 2>/dev/null)
+	[ "$cur" = "$old" ] || apply_baseline
+	exit 0
+}
