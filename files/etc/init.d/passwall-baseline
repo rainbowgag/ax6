@@ -1,38 +1,48 @@
 #!/bin/sh /etc/rc.common
 # 固件基线 - 每次开机无条件强制应用(开机最后阶段 S99 执行, 无线已就绪)
-# 2.4G 禁用; 5G=AA_5G/asd12345; root密码=root; 主题=argon亮色; IPv6关闭
+# 2.4G 禁用; 5G=AA_5G/asd12345; root密码=root; 主题=argon亮色+中文; IPv6关闭; quickstart 不抢默认页
 START=99
 STOP=01
 
 apply_baseline() {
-	# 1) 无线: 确保无线配置已生成
+	# 1) 无线: 2.4G 禁用; 5G=AA_5G/asd12345（SSID/加密/密码必须设置在 wifi-iface 上）
 	[ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
-	for r in $(uci -q show wireless 2>/dev/null | grep "\.band='2g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
-		uci -q set "$r.disabled='1'"
-	done
-	for r in $(uci -q show wireless 2>/dev/null | grep "\.band='5g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
-		uci -q set "$r.disabled='0'"
-		uci -q set "$r.ssid='AA_5G'"
-		uci -q set "$r.encryption='psk2'"
-		uci -q set "$r.key='asd12345'"
+	for r in $(uci -q show wireless 2>/dev/null | sed -n 's/^wireless\.\(radio[0-9][0-9]*\)=wifi-device$/\1/p'); do
+		band="$(uci -q get wireless.$r.band 2>/dev/null)"
+		iface="$(uci -q show wireless 2>/dev/null | sed -n "s/^wireless\.\([a-zA-Z0-9_]*\)\.device='$r'$/\1/p" | head -n1)"
+		[ -z "$iface" ] && iface="default_$r"
+		case "$band" in
+			5g)
+				uci -q set wireless.$r.disabled='0'
+				uci -q set wireless.$iface.disabled='0'
+				uci -q set wireless.$iface.ssid='AA_5G'
+				uci -q set wireless.$iface.encryption='psk2'
+				uci -q set wireless.$iface.key='asd12345'
+				;;
+			2g)
+				uci -q set wireless.$r.disabled='1'
+				uci -q set wireless.$iface.disabled='1'
+				;;
+		esac
 	done
 	uci -q commit wireless 2>/dev/null || true
 	[ -s /etc/config/wireless ] && /etc/init.d/wifi reload >/dev/null 2>&1 || true
 
-	# 2) root 密码 -> root (每次开机强制, 保证 root/root 可登录)
-	(echo 'root'; echo 'root') | passwd root >/dev/null 2>&1 || true
+	# 2) root 密码 -> root（直接写 shadow，确定性）
+	sed -i 's|^root:.*|root:$1$QUXHQx.n$mkasdtRiIdGx5KFkTorth.:19000:0:99999:7:::|' /etc/shadow 2>/dev/null || true
 
-	# 3) 主题 -> argon 亮色
+	# 3) 主题 -> argon 亮色 + 中文界面 + 资源路径
 	if [ -d /www/luci-static/argon ]; then
 		uci -q set luci.main.mediaurlbase='/luci-static/argon'
-		uci -q commit luci 2>/dev/null || true
 	fi
-	if [ -f /etc/config/argon ]; then
-		uci -q set argon.global.mode='light'
-		uci -q commit argon 2>/dev/null || true
-	fi
+	uci -q set luci.main.lang='zh-cn'
+	uci -q set luci.main.resourcebase='/luci-static/resources'
+	uci -q set luci.main.ubuspath='/ubus/'
+	uci -q set argon.global.mode='light'
+	uci -q commit luci 2>/dev/null || true
+	uci -q commit argon 2>/dev/null || true
 
-	# 4) 关闭 IPv6 (幂等)
+	# 4) 关闭 IPv6
 	for i in $(uci -q show network | grep "\.ipv6='auto'" | sed "s/\(network\.[a-z0-9_]*\)\..*/\1/"); do
 		uci -q set "$i.ipv6='0'"
 	done
@@ -45,6 +55,13 @@ apply_baseline() {
 net.ipv6.conf.all.disable_ipv6=1
 net.ipv6.conf.default.disable_ipv6=1
 CONF
+
+	# 5) quickstart 是全屏向导，会吞掉侧边菜单；禁用它，让后台默认落在标准状态页(有菜单)
+	if [ -x /etc/init.d/quickstart ]; then
+		/etc/init.d/quickstart disable 2>/dev/null || true
+		/etc/init.d/quickstart stop 2>/dev/null || true
+	fi
+
 	exit 0
 }
 
