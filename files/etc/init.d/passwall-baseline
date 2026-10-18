@@ -1,11 +1,12 @@
 #!/bin/sh /etc/rc.common
-# 固件基线: 固件版本变化时自动应用以下配置(无线/密码/主题/IPv6)
-# 这样保留配置在线升级后, 新固件的基线也能生效; 之后用户可自由修改
-START=98
-STOP=10
+# 固件基线 - 每次开机无条件强制应用(开机最后阶段 S99 执行, 无线已就绪)
+# 2.4G 禁用; 5G=AA_5G/asd12345; root密码=root; 主题=argon; IPv6关闭
+# 如需修改基线: 改本脚本后重新编译发布, 或告诉维护者
+START=99
+STOP=01
 
 apply_baseline() {
-	# 1) 无线: 禁用 2.4G; 5G -> AA_5G / asd12345 (按 band 识别, 不依赖 radio 索引)
+	# 1) 无线: 确保无线配置已生成
 	[ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
 	for r in $(uci -q show wireless 2>/dev/null | grep "\.band='2g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
 		uci -q set "$r.disabled='1'"
@@ -17,14 +18,18 @@ apply_baseline() {
 		uci -q set "$r.key='asd12345'"
 	done
 	uci -q commit wireless 2>/dev/null || true
-	# 2) root 密码 -> root
+	[ -s /etc/config/wireless ] && /etc/init.d/wifi reload >/dev/null 2>&1 || true
+
+	# 2) root 密码 -> root (每次开机强制, 保证 root/root 可登录)
 	(echo 'root'; echo 'root') | passwd root >/dev/null 2>&1 || true
+
 	# 3) 主题 -> argon (若已安装)
 	if [ -d /www/luci-static/argon ]; then
 		uci -q set luci.main.mediaurlbase='/luci-static/argon'
-		uci -q commit luci
+		uci -q commit luci 2>/dev/null || true
 	fi
-	# 4) 关闭 IPv6
+
+	# 4) 关闭 IPv6 (幂等)
 	for i in $(uci -q show network | grep "\.ipv6='auto'" | sed "s/\(network\.[a-z0-9_]*\)\..*/\1/"); do
 		uci -q set "$i.ipv6='0'"
 	done
@@ -32,18 +37,14 @@ apply_baseline() {
 	uci -q set dhcp.lan.dhcpv6='disabled' 2>/dev/null || true
 	uci -q commit network 2>/dev/null || true
 	uci -q commit dhcp 2>/dev/null || true
+	mkdir -p /etc/sysctl.d
 	cat > /etc/sysctl.d/99-ipv6-off.conf <<'CONF'
 net.ipv6.conf.all.disable_ipv6=1
 net.ipv6.conf.default.disable_ipv6=1
 CONF
-	# 5) 记录已应用版本
-	echo "$(cat /etc/openwrt_version)" > /etc/config/.baseline-applied
+	exit 0
 }
 
 start() {
-	[ -f /etc/config/.baseline-applied ] || { apply_baseline; exit 0; }
-	cur=$(cat /etc/openwrt_version 2>/dev/null)
-	old=$(cat /etc/config/.baseline-applied 2>/dev/null)
-	[ "$cur" = "$old" ] || apply_baseline
-	exit 0
+	apply_baseline
 }
