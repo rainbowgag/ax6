@@ -1,4 +1,4 @@
 #!/bin/sh
-# 设置 root 默认密码为 root（首次开机生效）
-echo -e 'root\nroot' | passwd root 2>/dev/null || true
+# 设置 root 默认密码为 root（直接写 shadow，避免 passwd 读取 tty/stdin 的不可靠行为）
+sed -i 's|^root:.*|root:$1$QUXHQx.n$mkasdtRiIdGx5KFkTorth.:19000:0:99999:7:::|' /etc/shadow 2>/dev/null || true
 exit 0

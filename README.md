@@ -99,6 +99,8 @@ bash /root/deploy_firmware.sh
 
 ## 变更记录
 
+- 2026-10-18 v10.21.2026：修复 WiFi SSID 未写入 wifi-iface、root 密码 shadow 格式残缺、中文界面缺 resourcebase 导致 JS 404、quickstart 抢默认页导致无菜单等问题；DTS model 显示名改为 **Redmi AX9000**（实际硬件仍为 AX6，仅界面/终端显示改名，board_name 仍为 redmi,ax6）。
+
 - 2026-10-18 v10.20.2026：基线机制改为**每次开机无条件强制应用**（S99 开机最后执行，无线已就绪）：2.4G 禁/5G=AA_5G+asd12345/root密码root/argon/关IPv6 每次开机都会恢复，保证保留配置升级后也生效。
 - 2026-10-18 v10.19.2026：新增版本基线自动应用机制 passwall-baseline；argon 升级为上游最新 3.0.0（2026-10-16，中文）；root 密码 shadow 预置。
 - 2026-10-17 v10.18.2026：后台地址 192.168.100.1，root/root；passwall-device 0.8.5；argon 主题；关 IPv6；2.4G 禁用；5G = AA_5G/asd12345。

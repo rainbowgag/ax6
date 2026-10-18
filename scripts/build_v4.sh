@@ -11,7 +11,7 @@ grep '^REVISION' include/version.mk
 echo "===== [2] 预置 root 密码哈希 (files/etc/shadow) ====="
 HASH='$1$QUXHQx.n$mkasdtRiIdGx5KFkTorth.'
 mkdir -p files/etc
-awk -v h="$HASH" 'BEGIN{OFS="\t"} NR==1 { $1="root:" h; print } NR>1 { print }' "$R/etc/shadow" > files/etc/shadow
+sed '1c\root:$1$QUXHQx.n$mkasdtRiIdGx5KFkTorth.:19000:0:99999:7:::' "$R/etc/shadow" > files/etc/shadow
 head -2 files/etc/shadow
 
 echo "===== [3] 版本基线自动应用 init 脚本 ===="

@@ -91,7 +91,7 @@ stop() {
 	rm -f /www/library/test/success.html
 	rmdir /www/library/test 2>/dev/null || true
 	# 移除 UCI address 锚定
-	uci -q show "dhcp.@dnsmasq[0].address" 2>/dev/null | sed -n "s/.*='\/\(bind\.lan\|captive\.apple\.com\|connectivitycheck\.gstatic\.com\|www\.msftconnecttest\.com\|detectportal\.firefox\.com\|nmcheck\.gnome\.org\)\/.*'/\1/p" | while read -r addr; do
+	uci -q show "dhcp.@dnsmasq[0].address" 2>/dev/null | sed -n "s/.*='\(\/\(bind\.lan\|captive\.apple\.com\|connectivitycheck\.gstatic\.com\|www\.msftconnecttest\.com\|detectportal\.firefox\.com\|nmcheck\.gnome\.org\)\/.*\)'/\1/p" | while read -r addr; do
 		uci -q del_list "dhcp.@dnsmasq[0].address=$addr" 2>/dev/null || true
 	done
 	uci -q commit dhcp || true

@@ -21,6 +21,9 @@ cp -rn devices/common/patches devices/qualcommax_ipq807x/ || true
 find devices/qualcommax_ipq807x/patches -maxdepth 1 -type f -name '*.revert.patch' -print0 2>/dev/null | sort -z | xargs -I % -0 -n 1 sh -c "patch -d './' -R --no-backup-if-mismatch -p1 -F 1 -i '%'"
 find devices/qualcommax_ipq807x/patches -maxdepth 1 -type f -name '*.patch' ! -name '*.revert.patch' ! -name '*.bin.patch' -print0 2>/dev/null | sort -z | xargs -I % -0 -n 1 sh -c "patch -d './' --no-backup-if-mismatch -p1 -F 1 -i '%'"
 
+echo "===== [4b/8] DTS model 改名 Redmi AX9000 ====="
+sed -i "s/model = "Redmi AX6"/model = "Redmi AX9000"/" target/linux/qualcommax/files/arch/arm64/boot/dts/qcom/ipq8071-ax6.dts
+
 echo "===== [5/8] 拷贝 diy 自定义文件 ====="
 cp -Rf ./diy/* ./ || true
 

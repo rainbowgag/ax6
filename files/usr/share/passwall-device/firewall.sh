@@ -18,7 +18,7 @@ collect_macs() {
 	wifi_macs="/tmp/passwall-device-wifi-macs.$$"
 	: > "$macs"
 	: > "$wifi_macs"
-	for section in $(uci -q show "$CONFIG" | sed -n "s/^$CONFIG\\.\([^.=]*\)=binding$/\1/p"); do
+	for section in $(uci -q show "$CONFIG" | sed -n "s/^$CONFIG\.\([^.=]*\)=binding$/\1/p"); do
 		mac="$(uci -q get "$CONFIG.$section.mac" || true)"
 		state="$(uci -q get "$CONFIG.$section.state" || true)"
 		[ "$state" = active ] && echo "$mac" | grep -Eq '^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$' && echo "$mac" >> "$macs" || true

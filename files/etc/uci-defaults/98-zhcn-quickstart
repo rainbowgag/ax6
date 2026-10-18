@@ -1,0 +1,6 @@
+#!/bin/sh
+# 首启: 强制中文界面 + 禁用 quickstart 默认落地页(避免登录后只有 wizard 无菜单)
+uci -q set luci.main.lang='zh-cn'
+uci -q commit luci 2>/dev/null || true
+[ -x /etc/init.d/quickstart ] && /etc/init.d/quickstart disable 2>/dev/null || true
+exit 0

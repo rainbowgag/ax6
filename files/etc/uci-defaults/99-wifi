@@ -1,14 +1,24 @@
 #!/bin/sh
-# 无线: 禁用 2.4G; 5G -> AA_5G / asd12345
-[ -s /etc/config/wireless ] || wifi config 2>/dev/null
-for r in $(uci -q show wireless 2>/dev/null | grep "\.band='2g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
-	uci set "$r.disabled='1'"
-done
-for r in $(uci -q show wireless 2>/dev/null | grep "\.band='5g'" | sed "s/\(wireless\.radio[0-9]*\)\..*/\1/"); do
-	uci set "$r.disabled='0'"
-	uci set "$r.ssid='AA_5G'"
-	uci set "$r.encryption='psk2'"
-	uci set "$r.key='asd12345'"
+# 无线: 禁用 2.4G; 5G -> AA_5G / asd12345（SSID/加密/密码必须设置在 wifi-iface 上）
+[ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
+
+for r in $(uci -q show wireless 2>/dev/null | sed -n 's/^wireless\.\(radio[0-9][0-9]*\)=wifi-device$/\1/p'); do
+    band="$(uci -q get wireless.$r.band 2>/dev/null)"
+    iface="$(uci -q show wireless 2>/dev/null | sed -n "s/^wireless\.\([a-zA-Z0-9_]*\)\.device='$r'$/\1/p" | head -n1)"
+    [ -z "$iface" ] && iface="default_$r"
+    case "$band" in
+        5g)
+            uci set wireless.$r.disabled='0'
+            uci set wireless.$iface.disabled='0'
+            uci set wireless.$iface.ssid='AA_5G'
+            uci set wireless.$iface.encryption='psk2'
+            uci set wireless.$iface.key='asd12345'
+            ;;
+        2g)
+            uci set wireless.$r.disabled='1'
+            uci set wireless.$iface.disabled='1'
+            ;;
+    esac
 done
 uci -q commit wireless 2>/dev/null || true
 exit 0
