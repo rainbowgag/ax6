@@ -1,5 +1,5 @@
 #!/bin/bash
-# v6 定制: passwall-editor 升级到最新(0.8.6) + argon 主题默认亮色 + 版本10.21.2026
+# v6 定制: passwall-editor 升级到最新(0.8.7) + argon 主题默认亮色 + 版本10.22.2026
 set -e
 cd /root/openwrt-2512 || exit 1
 R=build_dir/target-aarch64_cortex-a53_musl/root-qualcommax
@@ -111,8 +111,8 @@ EOF
 chmod +x files/etc/init.d/passwall-baseline
 grep -n "argon\|mode" files/etc/init.d/passwall-baseline | head -6
 
-echo "===== [5] 版本号 -> 10.21.2026 ====="
-sed -i 's/^REVISION:=.*/REVISION:=10.21.2026/' include/version.mk
+echo "===== [5] 版本号 -> 10.22.2026 ====="
+sed -i 's/^REVISION:=.*/REVISION:=10.22.2026/' include/version.mk
 grep '^REVISION' include/version.mk
 
 echo "===== [6] 增量编译 ====="
@@ -135,8 +135,8 @@ echo "--- 版本 ---"
 cat "$R/etc/openwrt_version"
 echo
 
-echo "===== [8] 部署 VER=10.21.2026 ====="
-sed -i 's/^VER=.*/VER=10.21.2026/' /root/deploy_firmware.sh
+echo "===== [8] 部署 VER=10.22.2026 ====="
+sed -i 's/^VER=.*/VER=10.22.2026/' /root/deploy_firmware.sh
 grep '^VER=' /root/deploy_firmware.sh
 bash /root/deploy_firmware.sh
 
@@ -144,6 +144,6 @@ echo "===== [9] 站点验证 ====="
 curl -s http://m.yaml.uk:25532/firmware/qualcommax-ipq807x/redmi_ax6/version.txt
 echo
 ls -la /var/www/passwall-editor/firmware/qualcommax-ipq807x/redmi_ax6/
-curl -s -o /tmp/v6-check.bin http://m.yaml.uk:25532/firmware/qualcommax-ipq807x/redmi_ax6/kwrt-10.21.2026-qualcommax-ipq807x-redmi_ax6-squashfs-sysupgrade.bin
+curl -s -o /tmp/v6-check.bin http://m.yaml.uk:25532/firmware/qualcommax-ipq807x/redmi_ax6/kwrt-10.22.2026-qualcommax-ipq807x-redmi_ax6-squashfs-sysupgrade.bin
 sha256sum /tmp/v6-check.bin
 echo "=== V6_DONE ==="
