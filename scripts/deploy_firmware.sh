@@ -3,7 +3,7 @@
 set -e
 TREE=/root/openwrt-2512
 WEB=/var/www/passwall-editor
-VER=10.22.2026
+VER=10.23.2026
 EXPECT="kwrt-${VER}-qualcommax-ipq807x-redmi_ax6-squashfs-sysupgrade.bin"
 MODEL_DIR=$WEB/firmware/qualcommax-ipq807x/redmi_ax6
 
