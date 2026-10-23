@@ -1,0 +1,7 @@
+#!/bin/sh
+set_redmi_model() {
+	[ -f /tmp/sysinfo/board_name ] || return 0
+	[ "$(cat /tmp/sysinfo/board_name)" = "redmi,ax6" ] && \
+		echo "Redmi AX9000" > /tmp/sysinfo/model
+}
+boot_hook_add preinit_main set_redmi_model

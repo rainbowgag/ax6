@@ -1,0 +1,5 @@
+#!/bin/sh
+[ -f /rom/etc/openwrt_version ] && cp -f /rom/etc/openwrt_version /etc/openwrt_version
+[ -f /rom/etc/openwrt_release ] && cp -f /rom/etc/openwrt_release /etc/openwrt_release
+[ -f /rom/usr/lib/os-release ] && cp -f /rom/usr/lib/os-release /usr/lib/os-release
+exit 0
