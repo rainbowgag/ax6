@@ -1,0 +1,30 @@
+    
+sed -i -e '$i\/etc/init.d/dropbear reload' -e '$i\sed -i \"/dropbear reload/d\" /etc/rc.local' /etc/rc.local
+sed -i 's/Kwrt /Kwrt 定制版 /' /usr/lib/os-release
+uci -q set system.@system[0].links='0'
+
+version=`uci -q get system.@status[0].version`
+if test $version -lt 2; then
+
+uci -q set network.lan.ipaddr='192.168.100.1/24'
+
+
+uci -q set luci.main.mediaurlbase=/luci-static/vantage
+
+uci -q set dhcp.lan.ra='disabled'
+uci -q set dhcp.lan.dhcpv6='disabled'
+uci -q set dhcp.lan.ndp='disabled'
+uci -q set network.wan6.auto='0'
+
+uci -q set luci.main.landing_page=''
+
+. /sbin/mywifi -s AA_5G -p asd12345&
+uci -q set system.@status[0].version=2
+(echo 'root'; sleep 1; echo 'root') | /bin/busybox passwd root >/dev/null 2>&1
+fi
+uci -q commit
+if [ -f /etc/profile.d/opkg.sh ];then
+. /etc/profile.d/opkg.sh
+echo ' luci-theme-vantage luci-nginx luci-app-passwall luci-app-istorex iptables-nft miniupnpd-nftables ' | sed -e 's/^ //' -e 's/\s/ ipkg\n/g' | opkg uci custom
+fi
+rm -f /etc/uci-defaults/zz-asu-defaults
