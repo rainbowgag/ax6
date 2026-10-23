@@ -9,7 +9,7 @@ if test $version -lt 2; then
 uci -q set network.lan.ipaddr='192.168.100.1/24'
 
 
-uci -q set luci.main.mediaurlbase=/luci-static/vantage
+uci -q set luci.main.mediaurlbase=/luci-static/argon
 
 uci -q set dhcp.lan.ra='disabled'
 uci -q set dhcp.lan.dhcpv6='disabled'
